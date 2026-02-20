@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <style>
+        body { margin: 0; background: #000; overflow: hidden; }
+        
+        /* The Actual Content */
+        #protected-content {
+            background: white;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            transition: opacity 0.1s ease;
+        }
+
+        /* The 'Blackout' State */
+        .hidden-mode {
+            opacity: 0 !important;
+        }
+
+        .warning {
+            color: white;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: -1; /* Behind the content */
+        }
+    </style>
+</head>
+<body>
+
+    <div class="warning">Recording/Screenshot Detected or Window Inactive</div>
+
+    <div id="protected-content">
+        <h1>Sensitive Data Is Here</h1>
+        <p>If you try to capture this, it will turn black.</p>
+    </div>
+
+    <script>
+        const content = document.getElementById('protected-content');
+
+        // 1. Blackout when the user leaves the tab or opens a capture overlay
+        window.addEventListener('blur', () => {
+            content.classList.add('hidden-mode');
+        });
+
+        window.addEventListener('focus', () => {
+            content.classList.remove('hidden-mode');
+        });
+
+        // 2. Blackout on PrintScreen Key
+        document.addEventListener('keyup', (e) => {
+            if (e.key === 'PrintScreen') {
+                content.classList.add('hidden-mode');
+                // Brief blackout to ruin the shot
+                setTimeout(() => content.classList.remove('hidden-mode'), 500);
+            }
+        });
+
+        // 3. Detect "Display Media" (Screen Sharing)
+        // This triggers if they try to use the browser's native share feature
+        if (navigator.mediaDevices && navigator.mediaDevices.getDisplayMedia) {
+            const originalGetDisplayMedia = navigator.mediaDevices.getDisplayMedia;
+            navigator.mediaDevices.getDisplayMedia = function() {
+                content.classList.add('hidden-mode');
+                return originalGetDisplayMedia.apply(this, arguments);
+            };
+        }
+    </script>
+</body>
+</html>
